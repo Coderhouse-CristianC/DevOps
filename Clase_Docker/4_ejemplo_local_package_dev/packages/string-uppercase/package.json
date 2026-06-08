@@ -1,0 +1,7 @@
+{
+  "name": "@stdlib/string-uppercase",
+  "version": "1.0.0",
+  "description": "Convert a string to uppercase.",
+  "main": "lib/index.js",
+  "keywords": ["uppercase", "string", "convert"]
+}

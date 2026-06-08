@@ -1,0 +1,14 @@
+# Usamos la imagen oficial de Go completa (incluye compiladores, herramientas, SDK)
+FROM golang:1.22-alpine
+
+WORKDIR /app
+
+# Copiamos el código fuente de nuestra máquina al contenedor
+COPY main.go .
+
+# Compilamos la aplicación dentro del contenedor
+RUN go build -o mi-servidor main.go
+
+# Exponemos el puerto y ejecutamos
+EXPOSE 8080
+CMD ["./mi-servidor"]

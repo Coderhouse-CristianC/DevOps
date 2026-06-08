@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  # Servicio 1: El motor de la Base de Datos
+  base-datos:
+    image: postgres:alpine
+    container_name: mi_db_postgres
+    environment:
+      POSTGRES_USER: cristian
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: clase_docker
+    ports:
+      - "5432:5432"
+
+  # Servicio 2: El Gestor Visual Web
+  gestor-web:
+    image: adminer
+    container_name: mi_adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - base-datos

@@ -1,0 +1,29 @@
+# ---------------------------------------------------------
+# ETAPA 1: Construcción (Builder)
+# ---------------------------------------------------------
+# Usamos la imagen pesada de Go solo para compilar
+FROM golang:1.22-alpine AS builder
+
+WORKDIR /build
+
+COPY main.go .
+
+# Compilamos un binario estático y optimizado para Linux
+RUN CGO_ENABLED=0 GOOS=linux go build -o mi-servidor main.go
+
+
+# ---------------------------------------------------------
+# ETAPA 2: Producción (Runner)
+# ---------------------------------------------------------
+# Arrancamos de cero con una imagen de Linux Alpine limpia (pesa solo 5MB)
+FROM alpine:latest
+
+WORKDIR /app
+
+# El truco: Copiamos UNICAMENTE el binario compilado de la etapa anterior
+COPY --from=builder /build/mi-servidor .
+
+EXPOSE 8080
+
+# Ejecutamos el binario nativo
+CMD ["./mi-servidor"]
