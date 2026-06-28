@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marco teorico — Terraform & IaC</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.6;
+        }
+        header {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 32px 48px;
+        }
+        h1 { color: #58a6ff; font-size: 28px; margin-bottom: 4px; }
+        .subtitle { color: #8b949e; font-size: 14px; }
+        .container { max-width: 900px; margin: 0 auto; padding: 32px 48px; }
+
+        .section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+        .section-num {
+            display: inline-block;
+            background: #1f6feb;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            text-align: center;
+            border-radius: 50%;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        .section-title {
+            color: #58a6ff;
+            font-size: 20px;
+            display: inline;
+            vertical-align: middle;
+        }
+        .section-header {
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        p { font-size: 14px; margin-bottom: 12px; }
+        ul, ol { margin: 8px 0 12px 24px; font-size: 14px; }
+        li { margin-bottom: 6px; }
+        strong { color: #e6edf3; }
+        code {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+            background: #1c2128;
+            color: #f0883e;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .note {
+            background: #1c2128;
+            border-left: 3px solid #f0883e;
+            padding: 10px 16px;
+            margin: 12px 0;
+            border-radius: 0 6px 6px 0;
+            font-size: 13px;
+            color: #b1bac4;
+        }
+        .warn {
+            background: #1c2128;
+            border-left: 3px solid #f85149;
+            padding: 10px 16px;
+            margin: 12px 0;
+            border-radius: 0 6px 6px 0;
+            font-size: 13px;
+            color: #b1bac4;
+        }
+
+        .compare {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .compare-card {
+            background: #1c2128;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 16px;
+        }
+        .compare-card h4 { font-size: 13px; margin-bottom: 8px; }
+        .compare-card.bad h4 { color: #f85149; }
+        .compare-card.good h4 { color: #7ee787; }
+        .compare-card p { font-size: 13px; margin: 0; color: #b1bac4; }
+
+        .table-wrap { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+        th {
+            background: #21262d;
+            color: #8b949e;
+            text-align: left;
+            padding: 10px 14px;
+            font-weight: 600;
+            border-bottom: 1px solid #30363d;
+        }
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #21262d;
+            vertical-align: top;
+        }
+        td code {
+            font-size: 12px;
+        }
+
+        .flow {
+            background: #1c2128;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 20px;
+            text-align: center;
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 14px;
+            margin: 16px 0;
+            color: #8b949e;
+        }
+        .flow .arrow { color: #f0883e; margin: 0 8px; }
+        .flow .step { color: #58a6ff; }
+
+        footer { text-align: center; padding: 24px; color: #6e7681; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Marco teorico — Terraform & IaC</h1>
+    <p class="subtitle">Conceptos que necesitas saber antes de escribir una linea de Terraform</p>
+</header>
+
+<div class="container">
+
+    <!-- ====== 1. EL PROBLEMA ====== -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-num">1</span>
+            <span class="section-title">El problema: infra a mano</span>
+        </div>
+
+        <div class="compare">
+            <div class="compare-card bad">
+                <h4>Manual (consola de AWS)</h4>
+                <p>Haces clic tras clic para crear una EC2, una RDS, configurar security groups, abrir puertos...</p>
+            </div>
+            <div class="compare-card good">
+                <h4>IaC (Terraform)</h4>
+                <p>Describes todo en archivos de texto. Un comando crea todo. Reproducible y versionable.</p>
+            </div>
+        </div>
+
+        <p>Configurar infraestructura a mano tiene problemas concretos:</p>
+        <ul>
+            <li><strong>No es reproducible</strong> &mdash; si necesitas el mismo entorno en otra region, empiezas de nuevo.</li>
+            <li><strong>No hay control de versiones</strong> &mdash; nadie sabe que cambio, cuando, ni por que.</li>
+            <li><strong>Propenso a errores</strong> &mdash; un clic de mas abre un puerto al mundo o borra una base.</li>
+            <li><strong>Lento</strong> &mdash; crear 20 recursos a mano toma horas; con IaC, segundos.</li>
+        </ul>
+    </div>
+
+    <!-- ====== 2. QUE ES IaC ====== -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-num">2</span>
+            <span class="section-title">Que es Infrastructure as Code</span>
+        </div>
+
+        <p><strong>Infrastructure as Code (IaC)</strong> es describir tu infraestructura en archivos de texto que se pueden versionar, revisar y re aplicar las veces que haga falta. Obtienes el mismo resultado siempre.</p>
+
+        <p>En vez de "entrar a la consola y hacer clics", escribes:</p>
+        <ul>
+            <li>"Quiero una EC2 con esta AMI y este tamano"</li>
+            <li>"Quiero una RDS Postgres con 20GB"</li>
+            <li>"Quiero un firewall que abra el puerto 3000"</li>
+        </ul>
+
+        <p>Y Terraform se encarga de traducir eso en llamadas a la API de AWS. Si cometes un error, lo ves en el codigo antes de aplicarlo. Si necesitas otro entorno identico, copias los archivos y cambias la region.</p>
+    </div>
+
+    <!-- ====== 3. DECLARATIVO VS IMPERATIVO ====== -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-num">3</span>
+            <span class="section-title">Declarativo vs Imperativo</span>
+        </div>
+
+        <div class="compare">
+            <div class="compare-card bad">
+                <h4>Imperativo</h4>
+                <p>Le dices los pasos: "crea una VPC, despues una subnet, despues asociale un security group, despues..."</p>
+            </div>
+            <div class="compare-card good">
+                <h4>Declarativo (Terraform)</h4>
+                <p> describes el estado final: "quiero una EC2 y una RDS conectadas". Terraform averigua como llegar ahi.</p>
+            </div>
+        </div>
+
+        <p>No le dices a Terraform <em>como</em> llegar al resultado. Le dices <em>que</em> quieres. Terraform compara lo que pides con lo que existe (gracias al state) y calcula el plan de accion. Si ya existe, no hace nada. Si falta, lo crea. Si sobra, lo borra.</p>
+    </div>
+
+    <!-- ====== 4. CICLO DE VIDA ====== -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-num">4</span>
+            <span class="section-title">El ciclo de vida de Terraform</span>
+        </div>
+
+        <p>El patron que repetiras toda la clase:</p>
+
+        <div class="flow">
+            <span class="step">terraform init</span>
+            <span class="arrow">&rarr;</span>
+            <span class="step">terraform plan</span>
+            <span class="arrow">&rarr;</span>
+            <span class="step">terraform apply</span>
+            <span class="arrow">&rarr;</span>
+            <span class="step">terraform destroy</span>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:25%">Comando</th>
+                    <th>Que hace</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>terraform init</code></td>
+                    <td>Descarga los providers (plugins de AWS, random, tls, etc.) y prepara el directorio. Se corre una vez al empezar y cada vez que agregas un provider o modulo nuevo.</td>
+                </tr>
+                <tr>
+                    <td><code>terraform plan</code></td>
+                    <td>Muestra que crearia, modificaria o borraria. <strong>No cambia nada</strong>: es un dry-run. Siempre revisa el plan antes de aplicar.</td>
+                </tr>
+                <tr>
+                    <td><code>terraform apply</code></td>
+                    <td>Ejecuta los cambios. Pide confirmacion (escribe <code>yes</code>). Tambien puedes saltarla con <code>-auto-approve</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>terraform destroy</code></td>
+                    <td>Borra absolutamente todo lo que Terraform gestiona. Para parar de facturar al terminar la clase.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ====== 5. CONCEPTOS CLAVE ====== -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-num">5</span>
+            <span class="section-title">Conceptos clave de Terraform</span>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:20%">Concepto</th>
+                    <th style="width:25%">Que es</th>
+                    <th>Ejemplo en la clase</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Provider</strong></td>
+                    <td>Plugin que sabe hablar con un proveedor cloud</td>
+                    <td><code>aws</code> (crea recursos en AWS), <code>random</code> (genera passwords)</td>
+                </tr>
+                <tr>
+                    <td><strong>Resource</strong></td>
+                    <td>Algo que Terraform <strong>crea y gestiona</strong></td>
+                    <td><code>aws_instance</code> (la EC2), <code>aws_db_instance</code> (la RDS)</td>
+                </tr>
+                <tr>
+                    <td><strong>Data source</strong></td>
+                    <td>Algo que <strong>ya existe</strong> y Terraform solo lee</td>
+                    <td><code>aws_vpc.default</code> (el VPC por defecto de AWS)</td>
+                </tr>
+                <tr>
+                    <td><strong>Variable</strong></td>
+                    <td>Entrada configurable del modulo</td>
+                    <td><code>aws_region</code>, <code>instance_type</code>, <code>db_name</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Output</strong></td>
+                    <td>Valor que Terraform devuelve tras aplicar</td>
+                    <td><code>api_url</code>, <code>ec2_public_ip</code>, <code>ssh_command</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Module</strong></td>
+                    <td>Carpeta que encapsula recursos relacionados para reutilizar</td>
+                    <td><code>modules/security</code>, <code>modules/database</code>, <code>modules/compute</code></td>
+                </tr>
+                <tr>
+                    <td><strong>State</strong></td>
+                    <td>Archivo <code>.tfstate</code>: la memoria de Terraform</td>
+                    <td>Registra que creo, con que parametros, para poder saber que cambiar</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ====== 6. POR QUE STATE IMPORTA ====== -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-num">6</span>
+            <span class="section-title">Por que el state importa</span>
+        </div>
+
+        <p>El archivo <code>.tfstate</code> es la unica fuente de verdad de Terraform. Contiene el inventario de todo lo que creo, con sus IDs y propiedades reales.</p>
+
+        <p>Gracias al state, Terraform puede:</p>
+        <ul>
+            <li>Saber que ya existe (y no crearlo de nuevo).</li>
+            <li>Saber que falta (y crearlo).</li>
+            <li>Saber que cambio en el codigo (y actualizarlo en AWS).</li>
+            <li>Saber que ya no esta en el codigo (y destruirlo).</li>
+        </ul>
+
+        <div class="warn">
+            <strong>Si borras el .tfstate</strong>, Terraform pierde toda memoria. Los recursos siguen existiendo en AWS (siguen facturando), pero Terraform no sabe que existen. Si corres <code>plan</code>, intentara crear todo de nuevo. Recuperarse requiere <code>terraform import</code> (manual y tedioso) o borrar todo a mano en la consola y empezar de cero.
+        </div>
+
+        <div class="note">
+            <strong>En equipos</strong>, el state se guarda en <strong>S3 + DynamoDB</strong> (remoto, con lock). Asi nadie lo pisa ni lo pierde, y dos personas no aplican cambios al mismo tiempo.
+        </div>
+    </div>
+
+    <!-- ====== 7. COMANDOS UTILES ====== -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-num">7</span>
+            <span class="section-title">Comandos mas utiles</span>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:30%">Comando</th>
+                    <th style="width:45%">Para que sirve</th>
+                    <th>Cuando usarlo</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>terraform init</code></td>
+                    <td>Descarga providers y registra modulos</td>
+                    <td>Al empezar o tras agregar un provider/modulo</td>
+                </tr>
+                <tr>
+                    <td><code>terraform fmt</code></td>
+                    <td>Formatea los archivos <code>.tf</code> (indentacion, alineacion)</td>
+                    <td>Antes de cada commit</td>
+                </tr>
+                <tr>
+                    <td><code>terraform fmt -recursive</code></td>
+                    <td>Lo mismo pero incluyendo subcarpetas (modulos)</td>
+                    <td>Cuando tienes modulos</td>
+                </tr>
+                <tr>
+                    <td><code>terraform validate</code></td>
+                    <td>Verifica que la sintaxis sea correcta (no conecta a AWS)</td>
+                    <td>Despues de escribir codigo, antes del plan</td>
+                </tr>
+                <tr>
+                    <td><code>terraform plan</code></td>
+                    <td>Muestra que crearia/cambiaria/borraria (dry-run)</td>
+                    <td>Siempre, antes de apply</td>
+                </tr>
+                <tr>
+                    <td><code>terraform plan -out plan.tfplan</code></td>
+                    <td>Guarda el plan en un archivo para aplicarlo despues</td>
+                    <td>En CI/CD o para revisar antes de confirmar</td>
+                </tr>
+                <tr>
+                    <td><code>terraform apply</code></td>
+                    <td>Ejecuta los cambios (pide confirmacion)</td>
+                    <td>Cuando el plan te parece bien</td>
+                </tr>
+                <tr>
+                    <td><code>terraform apply -auto-approve</code></td>
+                    <td>Aplica sin pedir confirmacion</td>
+                    <td>En CI/CD (cuidado en produccion)</td>
+                </tr>
+                <tr>
+                    <td><code>terraform destroy</code></td>
+                    <td>Borra toda la infra gestionada</td>
+                    <td>Al terminar la clase (para no facturar)</td>
+                </tr>
+                <tr>
+                    <td><code>terraform output</code></td>
+                    <td>Muestra los outputs definidos</td>
+                    <td>Para ver la IP, URL, comando SSH</td>
+                </tr>
+                <tr>
+                    <td><code>terraform output -raw api_url</code></td>
+                    <td>Muestra un output sin comillas (para copiar/pegar)</td>
+                    <td>Para usar en <code>curl</code> o scripts</td>
+                </tr>
+                <tr>
+                    <td><code>terraform state list</code></td>
+                    <td>Lista todos los recursos que Terraform gestiona</td>
+                    <td>Para ver que hay en el state</td>
+                </tr>
+                <tr>
+                    <td><code>terraform show</code></td>
+                    <td>Muestra el contenido completo del state</td>
+                    <td>Para inspeccionar detalles de un recurso</td>
+                </tr>
+                <tr>
+                    <td><code>terraform taint &lt;recurso&gt;</code></td>
+                    <td>Marca un recurso para ser destruido y recreado en el proximo apply</td>
+                    <td>Cuando quieres forzar la recreacion de algo</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="note">
+            <strong>Flujo recomendado:</strong> <code>fmt</code> &rarr; <code>validate</code> &rarr; <code>plan</code> &rarr; <code>apply</code>. Siempre en ese orden.
+        </div>
+    </div>
+
+    <!-- ====== 8. LIMITACIONES ====== -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-num">8</span>
+            <span class="section-title">Limitaciones de Terraform</span>
+        </div>
+
+        <p>Terraform es una herramienta poderosa, pero tiene limitaciones que conviene conocer:</p>
+
+        <ul>
+            <li>
+                <strong>El state es un punto unico de fallo.</strong> Si lo pierdes, Terraform pierde toda memoria de lo que creo. Los recursos siguen en AWS facturando, pero Terraform no los reconoce. Por eso en produccion se guarda en S3 con backup.
+            </li>
+            <li>
+                <strong>El state puede contener secretos.</strong> Passwords, claves privadas y credenciales se guardan en texto plano dentro del <code>.tfstate</code>. Nunca lo subas a git. En clase usamos <code>.gitignore</code> para excluirlo.
+            </li>
+            <li>
+                <strong>No hay rollback nativo.</strong> Si un <code>apply</code> falla a mitad de camino (creo la EC2 pero fallo la RDS), te quedas en un estado parcial. Terraform no deshace lo ya creado; tienes que corregir y volver a aplicar.
+            </li>
+            <li>
+                <strong>Logica limitada.</strong> Terraform no es un lenguaje de programacion completo. No hay <code>if/else</code> tradicional, ni manejo de errores con <code>try/catch</code>. Hay <code>count</code>, <code>for_each</code> y <code>conditional</code>, pero son limitados.
+            </li>
+            <li>
+                <strong>Drift manual.</strong> Si alguien cambia algo directamente en la consola de AWS (abrir un puerto, cambiar un tamano), Terraform no se entera hasta que corres <code>terraform plan</code>. No hay deteccion automatica de cambios externos.
+            </li>
+            <li>
+                <strong>Importar recursos existentes es manual.</strong> Si tienes una EC2 creada a mano y quieres que Terraform la gestione, tienes que importarla uno por uno con <code>terraform import</code>. No hay escaneo automatico.
+            </li>
+            <li>
+                <strong>Infra grande = plan lento.</strong> Terraform consulta el estado de cada recurso en AWS antes de calcular el plan. Con cientos de recursos, un <code>plan</code> puede tardar minutos.
+            </li>
+            <li>
+                <strong>Secretos en user_data son visibles.</strong> Como vimos en clase, el password de la RDS se inyecta en el <code>user_data</code> de la EC2, y cualquiera con acceso a la consola de AWS puede leerlo en base64. La mejora seria usar <strong>SSM Parameter Store</strong> + IAM Role.
+            </li>
+        </ul>
+
+        <div class="note">
+            <strong>Estas limitaciones no restan valor a Terraform</strong>: siguen siendo mucho mejores que gestionar infra a mano. Conocerlas te ayuda a anticipar problemas y decidir cuando complementar con otras herramientas (Packer, Ansible, CI/CD).
+        </div>
+    </div>
+
+</div>
+
+<footer>Clase Terraform + AWS &mdash; Marco teorico</footer>
+
+</body>
+</html>
