@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recursos — Terraform + AWS</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.6;
+            padding: 0;
+        }
+        header {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 32px 48px;
+        }
+        h1 { color: #58a6ff; margin-bottom: 4px; font-size: 28px; }
+        .subtitle { color: #8b949e; font-size: 14px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 32px 48px; }
+
+        .section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+        .section-title {
+            color: #58a6ff;
+            font-size: 20px;
+            margin-bottom: 6px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #30363d;
+        }
+        .section-desc { color: #8b949e; font-size: 13px; margin-bottom: 20px; }
+
+        .resource {
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #21262d;
+        }
+        .resource:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .resource-name {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 15px;
+            color: #7ee787;
+            margin-bottom: 8px;
+        }
+        .resource-name .tag {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .tag-resource { background: #1f6feb22; color: #58a6ff; border: 1px solid #1f6feb55; }
+        .tag-data { background: #23863622; color: #7ee787; border: 1px solid #23863655; }
+
+        .resource-body p { font-size: 14px; color: #c9d1d9; margin-bottom: 10px; }
+        .resource-body ul { margin: 8px 0 8px 20px; font-size: 14px; }
+        .resource-body li { margin-bottom: 4px; }
+        .resource-body code {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            background: #1c2128;
+            color: #f0883e;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .note {
+            background: #1c2128;
+            border-left: 3px solid #f0883e;
+            padding: 10px 16px;
+            margin: 10px 0;
+            border-radius: 0 6px 6px 0;
+            font-size: 13px;
+            color: #b1bac4;
+        }
+
+        .table-wrap { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+        th {
+            background: #21262d;
+            color: #8b949e;
+            text-align: left;
+            padding: 10px 14px;
+            font-weight: 600;
+            border-bottom: 1px solid #30363d;
+        }
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #21262d;
+            vertical-align: top;
+        }
+        td code {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            background: #1c2128;
+            color: #f0883e;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .diagram-section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 32px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .mermaid { display: flex; justify-content: center; }
+
+        footer { text-align: center; padding: 24px; color: #6e7681; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Recursos — Terraform + AWS</h1>
+    <p class="subtitle">Users API (Node + PostgreSQL) — qué hace cada recurso y por qué existe</p>
+</header>
+
+<div class="container">
+
+    <!-- ====== FLUJO DE PETICIÓN (arriba para contexto) ====== -->
+    <div class="diagram-section">
+        <h2 class="section-title" style="border:none; padding-bottom:0;">Flujo de una peticion</h2>
+        <div class="mermaid">
+flowchart LR
+    CLIENT["curl<br/>http://IP:3000/health"]
+    EIP["Elastic IP<br/>(IP fija)"]
+    SG_EC2["Security Group EC2<br/>¿:3000 abierto?"]
+    EC2["EC2<br/>node server.js"]
+    SG_RDS["Security Group RDS<br/>¿viene del SG de EC2?"]
+    RDS["RDS PostgreSQL"]
+
+    CLIENT --> EIP --> SG_EC2 --> EC2
+    EC2 -->|":5432"| SG_RDS --> RDS
+
+    classDef client fill:#ffebee,stroke:#f44336,stroke-width:2px,color:#b71c1c
+    classDef sg fill:#fff3e0,stroke:#ff9800,stroke-width:2px,color:#e65100
+    classDef ec2 fill:#e3f2fd,stroke:#2196f3,stroke-width:2px,color:#0d47a1
+    classDef rds fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px,color:#4a148c
+    classDef eip fill:#e8f5e9,stroke:#4caf50,stroke-width:2px,color:#1b5e20
+
+    class CLIENT client
+    class EIP eip
+    class SG_EC2,SG_RDS sg
+    class EC2 ec2
+    class RDS rds
+        </div>
+    </div>
+
+    <!-- ====== DATA SOURCES ====== -->
+    <div class="section">
+        <h2 class="section-title">Data sources</h2>
+        <p class="section-desc">Referencian infraestructura existente. No crean nada.</p>
+
+        <div class="resource">
+            <div class="resource-name">aws_vpc.default <span class="tag tag-data">data</span></div>
+            <div class="resource-body">
+                <p>AWS te entrega un VPC por defecto: una red virtual privada aislada de otros clientes. Todo lo que creamos (EC2, RDS) vive dentro de este VPC. No lo creamos nosotros porque ya existe; solo lo <strong>referenciamos</strong> para que Terraform sepa donde colocar los recursos y que red usar para configurar las reglas de firewall.</p>
+            </div>
+        </div>
+
+        <div class="resource">
+            <div class="resource-name">aws_subnets.default <span class="tag tag-data">data</span></div>
+            <div class="resource-body">
+                <p>Las subnets son subdivisiones del VPC, cada una en una zona fisica distinta del datacenter (ej. <code>us-east-1a</code>, <code>us-east-1b</code>). AWS las reparte asi para que si una zona cae, la otra siga operando. RDS exige un grupo de al menos dos subnets para poder reubicarse si es necesario. La EC2 usa solo una.</p>
+            </div>
+        </div>
+
+        <div class="resource">
+            <div class="resource-name">aws_ami.al2023 <span class="tag tag-data">data</span></div>
+            <div class="resource-body">
+                <p>Una AMI es una imagen de disco preconfigurada: el sistema operativo base que arranca la EC2 al encenderse. Buscamos la mas reciente de <strong>Amazon Linux 2023</strong> (una distribucion de AWS basada en RPM, ligera y optimizada para EC2). No la creamos: la buscamos con <code>most_recent = true</code> para tener siempre la version mas parcheteada disponible.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== SECURITY ====== -->
+    <div class="section">
+        <h2 class="section-title">Modulo security</h2>
+        <p class="section-desc">Firewalls (Security Groups) que controlan que trafico entra y sale.</p>
+
+        <div class="resource">
+            <div class="resource-name">aws_security_group.ec2 <span class="tag tag-resource">recurso</span></div>
+            <div class="resource-body">
+                <p>Un Security Group es un firewall que se adjunta a un recurso: decide que trafico puede entrar y salir de el. Aqui abrimos <strong>dos puertos de entrada</strong>:</p>
+                <ul>
+                    <li><code>:22 (SSH)</code> &mdash; para conectarnos por terminal y depurar.</li>
+                    <li><code>:3000 (API)</code> &mdash; para que los alumnos hagan <code>curl</code> a la API desde sus maquinas.</li>
+                </ul>
+                <p>Y permitimos <strong>toda salida</strong> (egress a <code>0.0.0.0/0</code>), porque la EC2 necesita descargar paquetes (<code>dnf install</code>), clonar el repo (<code>git clone</code>) y conectarse a la RDS.</p>
+                <div class="note">Abrir a <code>0.0.0.0/0</code> significa "desde cualquier IP". En produccion esto seria un riesgo; en clase lo hacemos asi para que todos puedan probar sin restricciones.</div>
+            </div>
+        </div>
+
+        <div class="resource">
+            <div class="resource-name">aws_security_group.rds <span class="tag tag-resource">recurso</span></div>
+            <div class="resource-body">
+                <p>El firewall de la base de datos. A diferencia del de la EC2, <strong>no abre puertos al internet</strong>. Solo permite conexiones al <strong>:5432</strong> (PostgreSQL) que vengan especificamente del Security Group de la EC2.</p>
+                <p>Esto significa que nadie desde internet puede llegar a la base de datos. Solo la EC2 &mdash;porque tiene el SG correcto asignado&mdash; puede conectar. Es el patron recomendado: la base queda inaccesible desde afuera, la API es el unico puente.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== DATABASE ====== -->
+    <div class="section">
+        <h2 class="section-title">Modulo database</h2>
+        <p class="section-desc">RDS PostgreSQL gestionada + password aleatorio.</p>
+
+        <div class="resource">
+            <div class="resource-name">random_password.master <span class="tag tag-resource">recurso</span></div>
+            <div class="resource-body">
+                <p>Genera un password aleatorio de 24 caracteres (sin simbolos, para no romper conexiones ni URLs). No es un recurso de AWS: es del provider <code>random</code> de Terraform. Lo usamos para <strong>no hardcodear</strong> la contrasena en el codigo ni tener que inventarla manualmente.</p>
+                <p>El password viaja a dos lugares:</p>
+                <ul>
+                    <li>La instancia RDS (como credencial del usuario <code>api</code>).</li>
+                    <li>El <code>user_data</code> de la EC2 (para que la app pueda autenticarse).</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="resource">
+            <div class="resource-name">aws_db_subnet_group.this <span class="tag tag-resource">recurso</span></div>
+            <div class="resource-body">
+                <p>RDS exige que le digas en que subnets puede ubicarse mediante un <strong>DB Subnet Group</strong>: un grupo logico de subnets (minimo dos, en zonas distintas). Si AWS necesita mover la base a otra zona por mantenimiento o fallo, tiene donde.</p>
+            </div>
+        </div>
+
+        <div class="resource">
+            <div class="resource-name">aws_db_instance.this <span class="tag tag-resource">recurso</span></div>
+            <div class="resource-body">
+                <p>La base de datos PostgreSQL gestionada por AWS. Configuramos:</p>
+                <ul>
+                    <li><code>db.t4g.micro</code> &mdash; el tamano mas pequeno (free tier, ARM Graviton).</li>
+                    <li><code>20 GB gp3</code> &mdash; almacenamiento SSD de proposito general.</li>
+                    <li><code>publicly_accessible = false</code> &mdash; sin IP publica. Solo se alcanza desde dentro del VPC.</li>
+                    <li><code>skip_final_snapshot = true</code> &mdash; al hacer <code>terraform destroy</code>, no exige un backup final.</li>
+                    <li><code>deletion_protection = false</code> &mdash; permite borrarla con <code>terraform destroy</code>.</li>
+                </ul>
+                <div class="note">RDS es un servicio <strong>gestionado</strong>: AWS se encarga del parchado del motor, los backups, la replicacion y el reemplazo de hardware. Nosotros solo definimos el tamano, la version y las credenciales.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== COMPUTE ====== -->
+    <div class="section">
+        <h2 class="section-title">Modulo compute</h2>
+        <p class="section-desc">La maquina virtual (EC2), sus claves SSH y la IP publica fija.</p>
+
+        <div class="resource">
+            <div class="resource-name">tls_private_key.this <span class="tag tag-resource">recurso</span></div>
+            <div class="resource-body">
+                <p>Genera un par de claves RSA de 2048 bits usando el provider <code>tls</code> de Terraform. La <strong>clave publica</strong> se sube a AWS (para que la EC2 la reconozca al hacer SSH) y la <strong>clave privada</strong> se guarda en el estado de Terraform y se escribe a un archivo <code>.pem</code> en tu maquina.</p>
+                <div class="note">Esto evita tener que generar la clave manualmente con <code>ssh-keygen</code> y subirla por la consola. Terraform la crea y la distribuye por nosotros.</div>
+            </div>
+        </div>
+
+        <div class="resource">
+            <div class="resource-name">aws_key_pair.this <span class="tag tag-resource">recurso</span></div>
+            <div class="resource-body">
+                <p>Registra la <strong>clave publica</strong> en AWS con un nombre (<code>users-api-key</code>). Cuando creamos la EC2, le asignamos este key pair. Asi, al hacer <code>ssh -i clave.pem ec2-user@IP</code>, AWS valida que tu clave privada coincide con la publica registrada y te deja entrar.</p>
+            </div>
+        </div>
+
+        <div class="resource">
+            <div class="resource-name">aws_instance.this <span class="tag tag-resource">recurso</span></div>
+            <div class="resource-body">
+                <p>La maquina virtual. Configuramos:</p>
+                <ul>
+                    <li><strong>AMI</strong> &mdash; la imagen de Amazon Linux 2023 (del data source).</li>
+                    <li><code>t3.micro</code> &mdash; 2 vCPUs, 1 GB RAM (free tier).</li>
+                    <li><strong>Subnet</strong> &mdash; la primera del VPC por defecto.</li>
+                    <li><strong>Security Group</strong> &mdash; el <code>ec2-sg</code> que abre :22 y :3000.</li>
+                    <li><strong>Key pair</strong> &mdash; para acceso SSH.</li>
+                    <li><strong>user_data</strong> &mdash; el script de arranque que instala todo y levanta la app.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="resource">
+            <div class="resource-name">aws_eip.this <span class="tag tag-resource">recurso</span></div>
+            <div class="resource-body">
+                <p>Una <strong>Elastic IP</strong>: una IP publica fija asociada a la EC2. Sin esto, cada vez que la instancia reinicie, AWS le asignaria una IP publica distinta y los <code>curl</code> y las conexiones dejarian de funcionar. La EIP no cambia: siempre apunta a la EC2.</p>
+            </div>
+        </div>
+
+        <div class="resource">
+            <div class="resource-name">local_file.private_key <span class="tag tag-resource">recurso</span></div>
+            <div class="resource-body">
+                <p>Toma la clave privada generada por <code>tls_private_key</code> y la escribe en un archivo <code>clave.pem</code> en tu maquina, con permisos <code>600</code> (solo tu usuario puede leerla &mdash; SSH exige esto o se niega a conectar). Asi tienes el archivo listo para hacer SSH sin pasos manuales.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== USER_DATA ====== -->
+    <div class="section">
+        <h2 class="section-title">user_data.sh.tpl (script de arranque)</h2>
+        <p class="section-desc">Se ejecuta automaticamente la primera vez que la EC2 arranca (cloud-init). Terraform rellena los placeholders antes de mandarlo a AWS.</p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:30%">Paso</th>
+                        <th style="width:35%">Que hace</th>
+                        <th style="width:35%">Por que</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>dnf install -y git nodejs</code></td>
+                        <td>Instala git y Node.js</td>
+                        <td>La AMI viene limpia; sin esto no podemos clonar el repo ni correr la app</td>
+                    </tr>
+                    <tr>
+                        <td><code>git clone</code> / <code>git pull</code></td>
+                        <td>Clona el repo si no existe; hace pull si ya esta</td>
+                        <td>Trae el codigo al primer arranque; en reinicios actualiza a la ultima version</td>
+                    </tr>
+                    <tr>
+                        <td><code>cd /opt/app/Terraform/app</code></td>
+                        <td>Entra al directorio de la app</td>
+                        <td>El codigo Node vive en <code>Terraform/app/</code> dentro del repo, no en la raiz</td>
+                    </tr>
+                    <tr>
+                        <td><code>npm install --omit=dev</code></td>
+                        <td>Instala dependencias</td>
+                        <td>Express y pg no vienen con Node; hay que bajarlos</td>
+                    </tr>
+                    <tr>
+                        <td><code>chown -R ec2-user</code></td>
+                        <td>Cambia el dueno de los archivos</td>
+                        <td>systemd ejecuta la app como <code>ec2-user</code>; si los archivos son de root, la app no puede leerlos</td>
+                    </tr>
+                    <tr>
+                        <td><code>/etc/app.env</code></td>
+                        <td>Escribe credenciales de RDS + <code>PGSSL=true</code></td>
+                        <td>La app lee <code>PGHOST</code>, <code>PGPASSWORD</code>, etc. del entorno. <code>PGSSL=true</code> activa SSL porque RDS force_ssl rechaza conexiones sin cifrar</td>
+                    </tr>
+                    <tr>
+                        <td><code>systemd app.service</code></td>
+                        <td>Crea un servicio gestionado por systemd</td>
+                        <td>Si la app muere, systemd la reinicia en 3 segundos. Tambien arranca sola al reiniciar la EC2</td>
+                    </tr>
+                    <tr>
+                        <td><code>systemctl enable --now</code></td>
+                        <td>Activa el servicio ahora y en cada arranque</td>
+                        <td><code>enable</code> = arranca en cada boot; <code>--now</code> = arranca ya mismo</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<footer>Clase Terraform + AWS &mdash; Users API (Node + PostgreSQL)</footer>
+
+<script>
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+
+</body>
+</html>
