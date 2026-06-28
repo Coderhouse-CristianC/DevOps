@@ -165,7 +165,7 @@ Todo el código Terraform está en `infraestructura/`.
 |-----------------|--------------------------------------|-------------------------------------|
 | `aws_region`    | `us-east-1`                          | Región de despliegue                |
 | `project_name`  | `users-api`                          | Prefijo de los nombres de recursos  |
-| `app_repo_url`  | `https://github.com/CHANGEME/...git` | **Tu repo público** (¡obligatorio!) |
+| `app_repo_url`  | `https://github.com/Coderhouse-CristianC/DevOps.git` | Repo público que la EC2 clona |
 | `db_name`       | `appdb`                              | Nombre de la base                   |
 | `db_username`   | `api`                                | Usuario de la base                  |
 | `instance_type` | `t3.micro`                           | Tipo de EC2 (free tier)             |
