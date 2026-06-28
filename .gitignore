@@ -1,2 +1,15 @@
 .pnpm-store
 node_modules
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# Claves privadas generadas por Terraform
+*.pem
+
+# OS
+.DS_Store
