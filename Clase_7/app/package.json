@@ -1,0 +1,16 @@
+{
+  "name": "devsecops-demo",
+  "version": "1.0.0",
+  "description": "App vulnerable para demo de SAST y DAST",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "packageManager": "pnpm@11.3.0",
+  "dependencies": {
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2",
+    "sqlite3": "^5.1.7"
+  }
+}
