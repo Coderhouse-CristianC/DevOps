@@ -371,7 +371,7 @@ jobs:
         working-directory: Clase_7/app
 
       - name: SAST - SonarCloud
-        uses: SonarSource/sonarcloud-action@master
+        uses: SonarSource/sonarcloud-github-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
@@ -392,7 +392,7 @@ jobs:
   pnpm (acelera el `install` en runs siguientes).
 - `pnpm install` → instala las dependencias. `working-directory` indica que
   ejecute el comando dentro de `Clase_7/app/`.
-- `SonarSource/sonarcloud-action@master` → ejecuta el scanner de SonarCloud
+- `SonarSource/sonarcloud-github-action@master` → ejecuta el scanner de SonarCloud
   sobre `projectBaseDir: Clase_7` (donde está el `sonar-project.properties`).
   Usa el `SONAR_TOKEN` como secreto para autenticarse.
 
