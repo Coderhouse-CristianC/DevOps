@@ -81,25 +81,32 @@ app.get("/search", (req, res) => {
 
 app.get("/user", (req, res) => {
   const id = req.query.id;
+  if (id === undefined || id === "") {
+    return res.send("<p>ID requerido</p><a href='/'>Volver</a>");
+  }
   const query = "SELECT id, username, email FROM users WHERE id = " + id;
 
   db.get(query, (err, row) => {
-    if (err) {
-      res.send(`<p>Error: ${err.message}</p><a href="/">Volver</a>`);
-    } else if (row) {
-      res.send(`
-        <!DOCTYPE html>
-        <html>
-        <body>
-          <h1>Usuario #${row.id}</h1>
-          <p>Username: ${row.username}</p>
-          <p>Email: ${row.email}</p>
-          <a href="/">Volver</a>
-        </body>
-        </html>
-      `);
-    } else {
-      res.send("<p>Usuario no encontrado</p><a href="/">Volver</a>");
+    try {
+      if (err) {
+        res.send(`<p>Error: ${err.message}</p><a href="/">Volver</a>`);
+      } else if (row) {
+        res.send(`
+          <!DOCTYPE html>
+          <html>
+          <body>
+            <h1>Usuario #${row.id}</h1>
+            <p>Username: ${row.username}</p>
+            <p>Email: ${row.email}</p>
+            <a href="/">Volver</a>
+          </body>
+          </html>
+        `);
+      } else {
+        res.send("<p>Usuario no encontrado</p><a href='/'>Volver</a>");
+      }
+    } catch (e) {
+      if (!res.headersSent) res.send("<p>Error interno</p>");
     }
   });
 });
@@ -128,4 +135,9 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`App corriendo en http://localhost:${PORT}`);
+});
+
+app.use((err, _req, res, _next) => {
+  console.error("Error no manejado:", err);
+  if (!res.headersSent) res.status(500).send("<p>Error interno</p>");
 });
