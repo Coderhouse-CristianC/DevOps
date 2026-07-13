@@ -106,7 +106,10 @@ app.get("/user", (req, res) => {
 
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
-  const hash = crypto.createHash("md5").update(password).digest("hex");
+  if (!username || !password) {
+    return res.status(400).json({ error: "username y password son obligatorios" });
+  }
+  const hash = crypto.createHash("md5").update(String(password)).digest("hex");
 
   db.get(
     "SELECT * FROM users WHERE username = ? AND password_hash = ?",
