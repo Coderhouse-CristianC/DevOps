@@ -46,11 +46,12 @@ app.get("/", (_req, res) => {
         <input type="text" name="q" placeholder="Buscar..." />
         <button type="submit">Buscar</button>
       </form>
+      <p><a href="/search?q=test">Probar busqueda</a></p>
 
       <h2>Usuarios</h2>
       <ul>
-        <li><a href="/user/1">Usuario 1</a></li>
-        <li><a href="/user/2">Usuario 2</a></li>
+        <li><a href="/user?id=1">Usuario 1</a></li>
+        <li><a href="/user?id=2">Usuario 2</a></li>
       </ul>
 
       <h2>Login</h2>
@@ -78,8 +79,8 @@ app.get("/search", (req, res) => {
   `);
 });
 
-app.get("/user/:id", (req, res) => {
-  const id = req.params.id;
+app.get("/user", (req, res) => {
+  const id = req.query.id;
   const query = "SELECT id, username, email FROM users WHERE id = " + id;
 
   db.get(query, (err, row) => {
