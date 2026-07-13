@@ -26,7 +26,7 @@ jobs:
         working-directory: Clase_7/app
 
       - name: SAST - SonarCloud
-        uses: SonarSource/sonarcloud-action@master
+        uses: SonarSource/sonarcloud-github-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
